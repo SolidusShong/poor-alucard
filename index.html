@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Poor Alucard</title>
+	<script src="js/phaser.js"></script>
+</head>
+<body>
+
+<script type="text/javascript">
+	
+	var config = {
+		type: Phaser.CANVAS,
+		width: 640,
+		height: 480,
+		physics: {
+			default: 'arcade',
+			arcade: {
+				gravity: {y: 400},
+				debug: true
+			}
+		},
+		fps: {
+    		target: 30,
+    		forceSetTimeOut: true
+		},
+		scene: {
+			preload: preload,
+			create: create,
+			update: update,
+			
+		}
+
+	};
+
+	var game = new Phaser.Game(config);
+
+	function preload ()
+		{
+
+			this.load.image('bground', 'pic/bground.png');
+			this.load.image('moon', 'pic/moon.png');
+			this.load.image('block', 'pic/bigBlock.png');
+			this.load.spritesheet('alucard', 'pic/bat.png', 
+				{ frameWidth: 17, frameHeight: 22 });
+			this.load.spritesheet('medusa', 'pic/medusa.png', 
+				{ frameWidth: 17, frameHeight: 16 });
+
+		} 
+
+	function create ()
+		{
+			//==========BACKGROUND==========
+			this.add.image(320, 240, 'bground');
+			this.add.image(500, 100, 'moon').setScale(2);
+
+			//==========ALUCARD=============
+			alucard = this.physics.add.sprite(300, 200, 'alucard').setScale(2).setSize(13, 12);
+			alucard.setCollideWorldBounds(true);
+
+			this.anims.create(
+			{
+				key: 'fly',
+				frames: this.anims.generateFrameNumbers('alucard', {start: 0, end: 2}),
+				frameRate: 12,
+				repeat: -1
+			});
+
+			this.anims.create(
+			{
+				key: 'stuck',
+				frames: this.anims.generateFrameNumbers('alucard', {start: 1, end: 1}),
+				frameRate: 1,
+			});
+
+			//=======CONTROLS & TEXT SHIT===
+			cursors = this.input.keyboard.createCursorKeys();
+			pointer = this.input.activePointer;
+
+			var gameOver = false;
+
+			var score = 0;
+			var scoreText = this.add.text(16, 16, 'score: 0', { fontSize: '32px', fill: '#000' });
+
+			function Score() {
+
+			if (gameOver == true) {
+
+				return;
+
+			} else {
+
+			score += 1;
+            scoreText.setText('Score: ' + score);
+
+        	};}
+
+        	timedEvent = this.time.addEvent({ delay: 1000, callback: Score, loop: true });
+
+        	//========OBSTACLES===
+
+        	pillar1 = this.physics.add.sprite(1240, Phaser.Math.Between(300, 400), 'block').setScale(3);
+        
+        	pillar2 = this.physics.add.sprite(940, Phaser.Math.Between(300, 400), 'block').setScale(3);
+ 
+        	pillar3 = this.physics.add.sprite(640, Phaser.Math.Between(300, 400), 'block').setScale(3);
+
+        	pillars = this.add.group([pillar1, pillar2, pillar3]);
+
+        	pillars.children.iterate(function (child) {
+        		child.setVelocityX(-200);
+        		child.body.setAllowGravity(false)});
+
+        	//======ENEMIES===
+        	medusa = this.physics.add.sprite(634, 300, 'medusa').setScale(2);
+        	medusa.body.setAllowGravity(false);
+        	medusa.setVelocityX(-300);
+        	medusa.setVelocityY(-300);
+        	medusa.currentY = medusa.body.y;
+
+        	this.anims.create(
+       		{
+       			key: 'medusa-fly',
+       			frames: this.anims.generateFrameNumbers('medusa', {start: 0, end: 1}),
+       			frameRate: 4,
+       			repeat: -1
+       		});
+
+
+        	//======COLLISIONS====
+        	this.physics.add.collider(alucard, pillars, crush, null, this);
+        	this.physics.add.collider(alucard, medusa, crush, null, this);
+        	//this.physics.add.collider(alucard, pillar2, crush, null, this);
+        	//this.physics.add.collider(alucard, pillar3, crush, null, this);
+
+        	function crush (alucard, something) {
+
+				this.physics.pause();
+				alucard.anims.play('stuck', true);
+				gameOver = true;
+				var overText = this.add.text(200, 300, 'GAME OVER' + '\n' + 'Your score: ' + score, { fontSize: '32px', fill: '#000' });
+
+		}
+	}
+
+
+	function update ()
+	{
+
+		alucard.anims.play('fly', true);
+
+		medusa.anims.play('medusa-fly', true);
+
+//========MEDUSA FLYING=======
+		if (medusa.body.x <= -34) {
+			medusa.body.x = 634;
+			medusa.body.y = Phaser.Math.Between(40, 440);
+			medusa.currentY = medusa.body.y;
+		}
+
+		if (medusa.body.y <= medusa.currentY - 250) {
+			medusa.setVelocityY(300);
+		} else if (medusa.body.y >= medusa.currentY) {
+			medusa.setVelocityY(-300);
+		}
+
+//=========CONTROLS============
+		if (cursors.up.isDown || pointer.isDown)
+		{
+			alucard.setVelocityY(-200);
+		}
+//========PILLAR SPAWN=========
+		if (pillar1.body.x <= -300) {
+
+			pillar1.body.x = 640;
+			pillar1.body.y = Phaser.Math.Between(200, 400);
+
+		}
+
+		if (pillar2.body.x <= -300) {
+
+			pillar2.body.x = 640;
+			pillar2.body.y = Phaser.Math.Between(200, 400);
+
+		}
+		
+		if (pillar3.body.x <= -300) {
+
+			pillar3.body.x = 640;
+			pillar3.body.y = Phaser.Math.Between(200, 400);
+
+		}
+
+	}
+</script>
+
+</body>
+</html>
